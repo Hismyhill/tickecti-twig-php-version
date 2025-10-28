@@ -1,0 +1,26 @@
+{# This is the base twig file, extend it from other twig files #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Ticketi{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    {% block styles %}{% endblock %}
+</head>
+<body class="bg-gray-50">
+    {% block content %}
+        {% if app.user %}
+            {% include "components/sidebar.twig" %}
+            <div class="lg:pl-64">
+                <main class="py-8">
+                    {% block page_content %}{% endblock %}
+                </main>
+            </div>
+        {% else %}
+            {% block auth_content %}{% endblock %}
+        {% endif %}
+    {% endblock %}
+    {% block scripts %}{% endblock %}
+</body>
+</html>

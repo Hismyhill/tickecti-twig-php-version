@@ -1,0 +1,114 @@
+{% extends "base.twig" %}
+
+{% block content %}
+<main class="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4">
+  <div class="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
+    <h2 class="text-3xl font-bold text-center text-gray-800 mb-2">
+      Welcome Back!
+    </h2>
+    <p class="text-center text-gray-500 mb-8">
+      Sign in to continue to your account
+    </p>
+
+    <!-- Login Form -->
+    <form id="login-form" class="space-y-6" autocomplete="off">
+      <div class="relative">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.58 5.36a2.25 2.25 0 01-2.84 0L1.5 8.67z" />
+            <path d="M19.5 3h-15a3 3 0 00-3 3v.217l7.378 4.584a2.25 2.25 0 002.844 0L22.5 6.217V6a3 3 0 00-3-3z" />
+          </svg>
+        </div>
+        <input
+          id="email"
+          type="email"
+          required
+          placeholder="Enter your email"
+          class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      <div class="relative">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd"
+              d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z"
+              clip-rule="evenodd" />
+          </svg>
+        </div>
+        <input
+          id="password"
+          type="password"
+          required
+          placeholder="Enter your password"
+          class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      <button
+        type="submit"
+        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+      >
+        Login
+      </button>
+
+      <p class="text-center text-sm text-gray-500 mt-4">
+        Don’t have an account?
+        <a href="/auth/signup" class="text-blue-600 hover:text-blue-500 font-medium">Sign up</a>
+      </p>
+    </form>
+  </div>
+</main>
+
+<!-- Toast notification -->
+<div id="toast" class="hidden fixed bottom-5 right-5 bg-blue-600 text-white px-4 py-3 rounded-lg shadow-lg"></div>
+
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+// Initialize Supabase client
+const supabase = createClient("{{ supabase_url }}", "{{ supabase_key }}", {
+  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+});
+
+// Toast helper
+function showToast(message, color = 'blue') {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.className = `fixed bottom-5 right-5 px-4 py-3 rounded-lg text-white bg-${color}-600 shadow-lg`;
+  toast.classList.remove('hidden');
+  setTimeout(() => toast.classList.add('hidden'), 3000);
+}
+
+// Redirect if user already logged in
+const { data: { session } } = await supabase.auth.getSession();
+if (session?.user) {
+  window.location.href = "/dashboard";
+}
+
+// Handle login
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value.trim();
+
+  if (!email || !password) {
+    showToast("Please fill in all fields", "red");
+    return;
+  }
+
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    console.error(error);
+    showToast(error.message, "red");
+  } else {
+    showToast("Login successful!", "green");
+    setTimeout(() => (window.location.href = "/dashboard"), 1000);
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,64 @@
+<header class="bg-white shadow-sm rounded-md mb-10 px-8 mt-4 w-full">
+    <div class="flex justify-between items-center py-4">
+    <div className="flex items-center gap-4">
+        <a href="/" class="flex items-center gap-3">
+            <div class="flex items-center gap-3 px-6 py-2">
+              <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span class="text-xl font-bold text-white">T</span>
+              </div>
+              <h1
+                class="font-bold text-xl hidden md:block md:opacity-100"
+              >
+                Ticketi
+              </h1>
+            </div>
+        </a>
+</div>
+        <nav class="hidden md:flex items-center gap-4">
+                <a href="/dashboard" class="text-sm hover:text-gray-800 hover:text-xl">Dashboard</a>
+                <a href="/tickets" class="text-sm hover:text-gray-800 hover:text-xl">Tickets</a>
+            {% if isLoggedIn %}
+                <button id="logoutBtn" class="text-gray-600 hover:text-gray-900">Logout</button>
+            {% else %}
+                <a href="/auth/login" class=" px-4 py-2 border-[1.5px] border-gray-900 rounded-md text-sm cursor-pointer hover:bg-gray-500 hover:border-gray-500 hover:text-white">
+                    Sign Up
+                </a>
+            {% endif %}
+        </nav>
+
+        <div class="md:hidden">
+            <button id="mobileMenuBtn" class="text-gray-600 hover:text-gray-900">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+</header>
+
+<script type="module">
+import { supabase } from '/assets/js/supabaseClient.js';
+import { toast } from '/assets/js/toastHelper.js';
+
+const logoutBtn = document.getElementById('logoutBtn');
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', async () => {
+        try {
+            await supabase.auth.signOut();
+            toast.success('Logged out successfully');
+            window.location.href = '/';
+        } catch (error) {
+            toast.error('Error logging out');
+        }
+    });
+}
+
+// Mobile menu functionality
+const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+if (mobileMenuBtn) {
+    mobileMenuBtn.addEventListener('click', () => {
+        const mobileMenu = document.querySelector('[data-mobile-menu]');
+        mobileMenu.classList.toggle('hidden');
+    });
+}
+</script>

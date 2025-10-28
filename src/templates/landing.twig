@@ -1,0 +1,139 @@
+{# This is the landing template, its extends the base template #}
+{% extends "base.twig" %}
+
+{% block title %}Welcome to Ticketi{% endblock %}
+
+{% block auth_content %}
+<div class="bg-gray-50">
+    <div class="container mx-auto px-4">
+        <div class="lg:w-[95%] mx-auto">
+            {% include "components/header.twig" with { isLoggedIn: app.session.get('user') is not null } %}
+            {% include "components/hero.twig" %}
+
+            {# Why Ticketi Section #}
+            <section class="py-20">
+                <div class="text-center max-w-3xl mx-auto mb-12">
+                    <h2 class="text-4xl font-bold text-gray-800 mb-4">Why Ticketi?</h2>
+                    <p class="text-lg text-gray-600">
+                        Ticketi is designed to be simple, intuitive, and powerful. Here are some of the features that make it the best choice for your team.
+                    </p>
+                </div>
+                <div class="grid md:grid-cols-3 gap-8">
+                    {# Feature 1 - Create Tickets #}
+                    <div class="card p-8 text-center rounded-lg shadow-lg bg-white">
+                        <div class="flex justify-center items-center mb-4 w-12 h-12 rounded-full bg-blue-100 lg:h-16 lg:w-16">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-blue-600">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.75H9.375A1.125 1.125 0 008.25 4.875V8.25m0 0l-3.659 3.659A1.5 1.5 0 004.5 12.75V15.75m0 0l-1.5 1.5V21h18v-4.5l-1.5-1.5V12.75a1.5 1.5 0 00-.441-1.086L15.75 8.25m-4.875-4.5H14.25m-4.875 0V8.25m0 0h-3.659m3.659 0l3.659 3.659m0 0V15.75m0 0h3.659m-3.659 0l3.659 3.659m0 0V21m-4.875-4.5H14.25m-4.875 0V21"/>
+                            </svg>
+                        </div>
+                        <h4 class="font-bold text-xl mb-2">Create Tickets with Ease</h4>
+                        <p class="text-gray-600">Our intuitive form makes it simple to create and categorize tickets, so you can get back to what matters.</p>
+                    </div>
+
+                    {# Feature 2 - Track Status #}
+                    <div class="card p-8 text-center rounded-lg shadow-lg bg-white">
+                        <div class="flex justify-center items-center mb-4 w-12 h-12 rounded-full bg-blue-100 lg:h-16 lg:w-16">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-blue-600">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h18m-13.5-9L21 7.5m0 0L16.5 12M21 7.5H3"/>
+                            </svg>
+                        </div>
+                        <h4 class="font-bold text-xl mb-2">Track Ticket Status</h4>
+                        <p class="text-gray-600">Keep an eye on the progress of each ticket with our clear, color-coded status indicators.</p>
+                    </div>
+
+                    {# Feature 3 - Accessibility #}
+                    <div class="card p-8 text-center rounded-lg shadow-lg bg-white">
+                        <div class="flex justify-center items-center mb-4 w-12 h-12 rounded-full bg-blue-100 lg:h-16 lg:w-16">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-blue-600">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.473-1.688 3.348l-4.48 4.48a1.75 1.75 0 01-2.474 0l-4.48-4.48A3.75 3.75 0 013 12V6a3 3 0 013-3h12a3 3 0 013 3v6z"/>
+                            </svg>
+                        </div>
+                        <h4 class="font-bold text-xl mb-2">Built for Accessibility</h4>
+                        <p class="text-gray-600">We believe in software for everyone. Ticketi is designed with accessibility in mind, from the ground up.</p>
+                    </div>
+                </div>
+            </section>
+
+            {# How It Works Section #}
+            <section class="py-20">
+                <div class="text-center max-w-3xl mx-auto mb-12">
+                    <h2 class="text-4xl font-bold text-gray-800 mb-4">How It Works</h2>
+                    <p class="text-lg text-gray-600">Getting started with Ticketi is as easy as 1, 2, 3.</p>
+                </div>
+                <div class="grid md:grid-cols-3 gap-8 text-center">
+                    {% for step in [
+                        { number: '1', title: 'Create an Account', description: 'Sign up for a free account in just a few minutes. No credit card required.' },
+                        { number: '2', title: 'Create Your First Ticket', description: 'Use our simple form to create your first ticket and assign it to a team member.' },
+                        { number: '3', title: 'Start Resolving', description: 'Track the status of your tickets and collaborate with your team to resolve issues faster.' }
+                    ] %}
+                        <div class="card p-8">
+                            <div class="flex justify-center items-center mb-4 w-12 h-12 rounded-full bg-blue-100 lg:h-16 lg:w-16 mx-auto">
+                                <span class="text-2xl font-bold text-blue-600">{{ step.number }}</span>
+                            </div>
+                            <h4 class="font-bold text-xl mb-2">{{ step.title }}</h4>
+                            <p class="text-gray-600">{{ step.description }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            {# Testimonials Section - Replace include with direct content #}
+            <section class="py-20">
+                <div class="text-center max-w-3xl mx-auto mb-12">
+                    <h2 class="text-4xl font-bold text-gray-800 mb-4">What Our Customers Are Saying</h2>
+                    <p class="text-lg text-gray-600">We're trusted by teams of all sizes, from small startups to large enterprises.</p>
+                </div>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="card p-8 rounded-lg shadow-lg bg-white">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 rounded-full bg-gray-200 mr-4"></div>
+                            <div>
+                                <p class="font-bold text-lg">Sarah, Project Manager</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-600 text-lg">"Ticketi has been a game-changer for our team. We're more organized and efficient than ever before."</p>
+                    </div>
+                    <div class="card p-8 rounded-lg shadow-lg bg-white">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 rounded-full bg-gray-200 mr-4"></div>
+                            <div>
+                                <p class="font-bold text-lg">Michael, Developer</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-600 text-lg">"I love how simple and intuitive Ticketi is. It's a pleasure to use."</p>
+                    </div>
+                </div>
+            </section>
+
+            {# CTA Section - Replace include with direct content #}
+            <section class="py-20 text-center">
+                <div class="bg-blue-600 rounded-lg p-12">
+                    <h2 class="text-4xl font-bold text-white mb-4">Ready to Get Started?</h2>
+                    <p class="text-lg text-blue-100 mb-8">Create an account and start managing your tickets in minutes. No credit card required.</p>
+                    <a href="/auth/signup" class="btn btn-primary bg-white text-blue-600 font-bold py-3 px-8 rounded-lg text-lg hover:bg-gray-100">
+                        Sign Up for Free
+                    </a>
+                </div>
+            </section>
+
+            {% include "components/footer.twig" %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+import { supabase } from '/assets/js/supabaseClient.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Check authentication status
+    const user = supabase.auth.getUser();
+    if (user) {
+        document.querySelectorAll('[data-auth-only]').forEach(el => {
+            el.classList.remove('hidden');
+        });
+    }
+});
+</script>
+{% endblock %}

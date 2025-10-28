@@ -1,0 +1,300 @@
+{% extends "base.twig" %}
+
+{% block content %}
+<div class="flex h-screen bg-gray-50">
+
+  {# Sidebar #}
+  {% include "components/_sidebar.twig" %}
+
+  <!-- Main Dashboard Content -->
+  <div id="dashboard-content"
+       class="flex-1 overflow-y-auto transition-all duration-300 relative z-0 md:pl-64">
+    <div class="container py-8 px-4 md:px-8">
+      
+      <!-- Header Section -->
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-800">Dashboard</h1>
+          <p class="text-gray-600 mt-1 flex gap-4" id="welcome-text">
+            <span class="text-base font-semibold">Welcome, User</span>
+            &mdash; Track and manage your support tickets
+          </p>
+        </div>
+        <div class="mt-4 md:mt-0">
+          <button id="create-ticket-btn"
+                  class="btn bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Create New Ticket
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats Overview -->
+      <div id="stats" class="grid md:grid-cols-4 gap-6 mb-8"></div>
+
+      <!-- Filter Tabs -->
+      <div id="filters" class="flex gap-4 mb-6 border-b border-gray-200"></div>
+
+      <!-- Recent Tickets Section -->
+      <section>
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-semibold text-gray-800">Recent Tickets</h3>
+          <a href="/tickets" class="text-blue-600 hover:text-blue-700 font-medium">
+            View all tickets →
+          </a>
+        </div>
+        <div id="ticket-grid" class="grid md:grid-cols-3 gap-6"></div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<!-- Ticket Modal -->
+<div id="ticket-modal" class="fixed inset-0 z-50 hidden bg-black/40 flex items-center justify-center">
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6">
+    <h2 id="modal-title" class="text-xl font-semibold mb-4">Create Ticket</h2>
+    <form id="ticket-form" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium mb-1">Title</label>
+        <input type="text" id="ticket-title" class="w-full border-gray-300 rounded-lg p-2 focus:ring-blue-500" required>
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Description</label>
+        <textarea id="ticket-description" rows="4" class="w-full border-gray-300 rounded-lg p-2 focus:ring-blue-500"></textarea>
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Status</label>
+        <select id="ticket-status" class="w-full border-gray-300 rounded-lg p-2 focus:ring-blue-500">
+          <option value="open">Open</option>
+          <option value="in-progress">In Progress</option>
+          <option value="closed">Closed</option>
+        </select>
+      </div>
+      <div class="flex justify-end gap-3 mt-4">
+        <button type="button" id="cancel-btn" class="px-4 py-2 border rounded-lg text-gray-600 hover:bg-gray-100">Cancel</button>
+        <button type="submit" id="submit-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Create</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="hidden fixed bottom-5 right-5 bg-blue-600 text-white px-4 py-3 rounded-lg shadow-lg"></div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+// Initialize Supabase
+const supabase = createClient("{{ supabase_url }}", "{{ supabase_key }}", {
+  auth: { 
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true
+     },
+});
+
+function showToast(message, color = 'blue') {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.className = `fixed bottom-5 right-5 px-4 py-3 rounded-lg text-white bg-${color}-600 shadow-lg`;
+  toast.classList.remove('hidden');
+  setTimeout(() => toast.classList.add('hidden'), 3000);
+}
+
+let user = null;
+let editingTicket = null;
+let currentTickets = [];
+
+// Restore user session
+async function initSession() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) {
+    window.location.href = "/auth/login";
+    return;
+  }
+  user = session.user;
+  document.getElementById('welcome-text').innerHTML =
+    `<span class="text-base font-semibold">Welcome, ${user.user_metadata?.full_name?.split(' ')[0] || user.email}</span>
+    &mdash; Track and manage your support tickets`;
+}
+await initSession();
+
+// --- Ticket CRUD --- //
+async function fetchTickets() {
+  const { data, error } = await supabase
+    .from('tickets')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) return showToast("Failed to load tickets", "red");
+  currentTickets = data;
+  renderStats(data);
+  renderTickets(data);
+}
+
+async function createTicket(ticket) {
+  const { error } = await supabase.from('tickets').insert([ticket]);
+  if (error) throw error;
+}
+
+async function updateTicket(id, updates) {
+  const { error } = await supabase.from('tickets').update(updates).eq('id', id);
+  if (error) throw error;
+}
+
+async function deleteTicket(id) {
+  const { error } = await supabase.from('tickets').delete().eq('id', id);
+  if (error) throw error;
+  showToast("Ticket deleted");
+  fetchTickets();
+}
+
+// --- Realtime Updates --- //
+function subscribeToRealtime() {
+  supabase
+    .channel('tickets_changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, (payload) => {
+      console.log('Realtime change:', payload);
+      const { eventType, new: newTicket, old: oldTicket } = payload;
+
+      if (eventType === 'INSERT') {
+        currentTickets.unshift(newTicket);
+        showToast('New ticket created');
+      } else if (eventType === 'UPDATE') {
+        const index = currentTickets.findIndex(t => t.id === newTicket.id);
+        if (index !== -1) currentTickets[index] = newTicket;
+        showToast('Ticket updated');
+      } else if (eventType === 'DELETE') {
+        currentTickets = currentTickets.filter(t => t.id !== oldTicket.id);
+        showToast('Ticket deleted', 'red');
+      }
+
+      renderStats(currentTickets);
+      renderTickets(currentTickets);
+    })
+    .subscribe();
+}
+
+// --- Rendering Functions --- //
+function renderStats(items) {
+  const total = items.length;
+  const open = items.filter(t => t.status === 'open').length;
+  const inProgress = items.filter(t => t.status === 'in-progress').length;
+  const closed = items.filter(t => t.status === 'closed').length;
+
+  const percentage = total === 0 ? 0 : Math.round((closed / total) * 100);
+  document.getElementById('stats').innerHTML = `
+    <div class="card bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 p-4 ">
+      <h4 class="text-blue-600 font-semibold">Total Tickets</h4>
+      <div class="mt-2 text-3xl font-bold text-gray-800">${total}</div>
+      <div class="mt-2 text-sm text-blue-600">${percentage}% resolved</div>
+    </div>
+    <div class="card bg-gradient-to-br from-green-50 to-green-100 border border-green-200 p-4">
+      <h4 class="text-green-600 font-semibold">Open Tickets</h4>
+      <div class="mt-2 text-3xl font-bold text-gray-800">${open}</div>
+    </div>
+    <div class="card bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 p-4">
+      <h4 class="text-yellow-600 font-semibold">In Progress</h4>
+      <div class="mt-2 text-3xl font-bold text-gray-800">${inProgress}</div>
+    </div>
+    <div class="card bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 p-4">
+      <h4 class="text-gray-600 font-semibold">Closed Tickets</h4>
+      <div class="mt-2 text-3xl font-bold text-gray-800">${closed}</div>
+    </div>
+  `;
+}
+
+function renderTickets(items) {
+  const grid = document.getElementById('ticket-grid');
+  grid.innerHTML = "";
+
+  if (items.length === 0) {
+    grid.innerHTML = `<div class="col-span-3 text-center py-10 text-gray-500">No tickets found</div>`;
+    return;
+  }
+
+  items.slice(0, 6).forEach(t => {
+    const card = document.createElement('div');
+    card.className = "card bg-white p-4 border rounded-lg shadow hover:shadow-md transition";
+    card.innerHTML = `
+      <h3 class="font-semibold text-gray-800">${t.title}</h3>
+      <p class="mt-2 text-sm text-gray-600">${t.description || ""}</p>
+      <div class="flex justify-between items-center mt-3">
+        <span class="text-xs font-medium px-2 py-1 rounded-full ${t.status === 'open' ? 'bg-green-100 text-green-700' :
+          t.status === 'in-progress' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'}">${t.status}</span>
+        <div class="flex gap-2">
+          <button class="text-blue-600 text-sm" onclick="editTicket(${t.id}, '${t.title}', '${t.description || ''}', '${t.status}')">Edit</button>
+          <button class="text-red-600 text-sm" onclick="deleteTicket(${t.id})">Delete</button>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// --- Modal Logic --- //
+const modal = document.getElementById('ticket-modal');
+const form = document.getElementById('ticket-form');
+const titleInput = document.getElementById('ticket-title');
+const descInput = document.getElementById('ticket-description');
+const statusSelect = document.getElementById('ticket-status');
+
+document.getElementById('create-ticket-btn').onclick = () => openModal();
+document.getElementById('cancel-btn').onclick = () => closeModal();
+
+function openModal(ticket = null) {
+  modal.classList.remove('hidden');
+  editingTicket = ticket;
+  document.getElementById('modal-title').textContent = ticket ? 'Edit Ticket' : 'Create Ticket';
+  document.getElementById('submit-btn').textContent = ticket ? 'Update' : 'Create';
+  if (ticket) {
+    titleInput.value = ticket.title;
+    descInput.value = ticket.description;
+    statusSelect.value = ticket.status;
+  } else {
+    form.reset();
+  }
+}
+
+function closeModal() {
+  modal.classList.add('hidden');
+  editingTicket = null;
+}
+
+window.editTicket = (id, title, desc, status) => {
+  openModal({ id, title, description: desc, status });
+};
+
+form.onsubmit = async (e) => {
+  e.preventDefault();
+  const ticket = {
+    title: titleInput.value.trim(),
+    description: descInput.value.trim(),
+    status: statusSelect.value,
+    user_id: user.id,
+  };
+
+  try {
+    if (editingTicket) {
+      await updateTicket(editingTicket.id, ticket);
+      showToast("Ticket updated successfully");
+    } else {
+      await createTicket(ticket);
+      showToast("Ticket created successfully");
+    }
+    closeModal();
+  } catch (error) {
+    console.error(error);
+    showToast("Error saving ticket", "red");
+  }
+};
+
+// Fetch initial data
+await fetchTickets();
+subscribeToRealtime();
+</script>
+{% endblock %}
