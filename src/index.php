@@ -7,7 +7,7 @@ use Twig\Environment;
 
 // ✅ Load environment variables
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
-$dotenv->load();
+$dotenv->safeLoad();
 
 // ✅ Set up Twig
 $loader = new FilesystemLoader(__DIR__ . '/templates');
@@ -17,8 +17,9 @@ $twig = new Environment($loader, [
 ]);
 
 // ✅ Get Supabase env values
-$supabaseUrl = $_ENV['SUPABASE_URL'] ?? '';
-$supabaseKey = $_ENV['SUPABASE_ANON_KEY'] ?? '';
+$SUPABASE_URL = $_ENV['SUPABASE_URL'] ?? getenv('SUPABASE_URL');
+$SUPABASE_ANON_KEY = $_ENV['SUPABASE_ANON_KEY'] ?? getenv('SUPABASE_ANON_KEY');
+
 
 // Simple router
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
