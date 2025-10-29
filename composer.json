@@ -17,13 +17,15 @@
   },
   "scripts": {
     "post-install-cmd": [
-      "npm run build:css"
+      "npm run build:css",
+      "mkdir -p cache",
+      "chmod 755 cache"
     ]
   },
   "authors": [
     {
       "name": "hismyhill",
-      "email": "owolabi@gmail.com"
+      "email": "owolabismaeel@gmail.com"
     }
   ]
 }
